@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
-<title>Tonight's the night Babyy</title>
+<title>Soirée ❤️ – Venise 3D</title>
 <style>
   html, body { margin:0; height:100%; background:#0b0e14; overflow:hidden; touch-action:none; }
   #app { position:fixed; inset:0; }
@@ -25,8 +25,9 @@
   .warn {
     position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:4;
     color:#fff; font: 14px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif; text-align:center;
-    background:rgba(0,0,0,.5); padding:12px 14px; border-radius:10px; display:none; max-width:90vw;
+    background:rgba(0,0,0,.5); padding:12px 14px; border-radius:10px; display:none;
   }
+  /* Intro text overlay fallback (si WebGL texte pas prêt, on montre aussi en HTML) */
   .intro-overlay {
     position:fixed; inset:0; display:flex; align-items:center; justify-content:center; z-index:2; pointer-events:none;
     font-family: "Helvetica Neue", Arial, system-ui; color:#fff; text-align:center;
@@ -38,7 +39,7 @@
 <body>
   <div id="app"></div>
   <div class="top">
-    <div class="title">Tonight's the night Babyy</div>
+    <div class="title">Soirée ❤️ – Venise</div>
     <div class="badge">Lecture auto</div>
   </div>
   <div id="warn" class="warn"></div>
@@ -54,23 +55,20 @@
     import { TextGeometry } from 'https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/geometries/TextGeometry.js';
 
     // ---------- Config ----------
-    // Pano Venise CORS-safe (texture d'exemple three.js)
-    const VENICE_PANORAMA_URL = 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r161/examples/textures/2294472375_24a3b8ef46_o.jpg';
-    // Fallback photos sans espaces (mets les vrais fichiers dans /photos/)
+    const VENICE_PANORAMA_URL = 'https://images.unsplash.com/photo-1505764706515-aa95265c5abc?auto=format&fit=crop&w=2400&q=80'; // remplace par ta 360° equirect si tu en as une
     const PHOTO_URLS_FALLBACK = [
-      '/photos/photo1.jpg',
-      '/photos/photo2.jpg',
-      '/photos/photo3.jpg'
+      'https://picsum.photos/id/1062/1200/900',
+      'https://picsum.photos/id/1025/1200/900',
+      'https://picsum.photos/id/237/1200/900'
     ];
     const INTRO_TEXT = 'À nos 3 mois Zainoubtii';
 
-    // ---------- Helpers ----------
+    // ---------- Aide ----------
     const warn = (msg) => { const el=document.getElementById('warn'); el.textContent=msg; el.style.display='block'; };
     try { const c=document.createElement('canvas'); const gl=c.getContext('webgl')||c.getContext('experimental-webgl'); if(!gl) throw 0; } catch { warn('WebGL semble désactivé. Ouvre ce lien en ligne et réessaie.'); }
 
-    // ---------- Renderer (opaque + clear color) ----------
-    const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:false, powerPreference:'high-performance' });
-    renderer.setClearColor(0x0b0e14, 1);
+    // ---------- Renderer ----------
+    const renderer = new THREE.WebGLRenderer({ antialias:false, alpha:true, powerPreference:'high-performance' });
     const DPR = Math.min(devicePixelRatio||1, 2);
     renderer.setPixelRatio(DPR);
     renderer.setSize(innerWidth, innerHeight);
@@ -78,15 +76,6 @@
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     document.getElementById('app').appendChild(renderer.domElement);
-
-    // --- DEBUG OVERLAY : affiche les erreurs JS à l'écran ---
-    window.addEventListener('error', (e) => {
-      warn('Erreur: ' + (e.message || 'inconnue'));
-    });
-    window.addEventListener('unhandledrejection', (e) => {
-      warn('Promise rejetée: ' + (e.reason?.message || e.reason || 'inconnue'));
-    });
-
     renderer.domElement.addEventListener('webglcontextlost', e => { e.preventDefault(); warn('Le contexte graphique a été perdu. Recharge la page.'); });
 
     // ---------- Scene / Camera ----------
@@ -102,6 +91,7 @@
       tex.mapping = THREE.EquirectangularReflectionMapping;
       tex.colorSpace = THREE.SRGBColorSpace;
       scene.environment = tex;
+      // Sky dome pour 360 "fake"
       const skyGeo = new THREE.SphereGeometry(80, 64, 32);
       skyGeo.scale(-1,1,1);
       const skyMat = new THREE.MeshBasicMaterial({ map: tex });
@@ -139,9 +129,9 @@
       new THREE.MeshStandardMaterial({ color:0x2b2f3a, roughness:0.85 })
     ); runner.position.set(0, tableY + tableTopH/2 + 0.01, 0); runner.receiveShadow=true; scene.add(runner);
 
-    const tableSurfaceY = tableY + tableTopH/2 + 0.02;
+    const tableSurfaceY = tableY + tableTopH/2 + 0.02; // sommet tapis
 
-    // ---------- Gâteau (plateau + détails) ----------
+    // ---------- Gâteau (mieux détaillé, sur plateau) ----------
     const cake = new THREE.Group(); scene.add(cake);
     const plateR = 0.52, plateH = 0.03;
     const plate = new THREE.Mesh(
@@ -158,13 +148,22 @@
     const baseH=0.28, midH=0.22, topH=0.18;
     const yBase = plate.position.y + plateH/2 + baseH/2;
     const t1 = tier(0.46, baseH, 0xffc9d8, yBase);
-    const t2 = tier(0.34, midH,  0xffffff, t1.position.y + baseH/2 + midH/2);
-    const t3 = tier(0.22, topH,  0xffa2bd, t2.position.y + midH/2 + topH/2);
+    const t2 = tier(0.34, midH, 0xffffff, t1.position.y + baseH/2 + midH/2);
+    const t3 = tier(0.22, topH, 0xffa2bd, t2.position.y + midH/2 + topH/2);
     cake.add(t1,t2,t3);
 
-    const ribbon  = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.015, 32, 200), new THREE.MeshStandardMaterial({ color:0xff89ad, roughness:0.5 })); ribbon.position.y  = t1.position.y + baseH/2 - 0.02; cake.add(ribbon);
-    const ribbon2 = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.012, 32, 200), new THREE.MeshStandardMaterial({ color:0xff89ad, roughness:0.5 })); ribbon2.position.y = t2.position.y + midH/2 - 0.02; cake.add(ribbon2);
+    // Rubans glaçage
+    const ribbon = new THREE.Mesh(
+      new THREE.TorusGeometry(0.46, 0.015, 32, 200),
+      new THREE.MeshStandardMaterial({ color:0xff89ad, roughness:0.5 })
+    ); ribbon.position.y = t1.position.y + baseH/2 - 0.02; cake.add(ribbon);
 
+    const ribbon2 = new THREE.Mesh(
+      new THREE.TorusGeometry(0.34, 0.012, 32, 200),
+      new THREE.MeshStandardMaterial({ color:0xff89ad, roughness:0.5 })
+    ); ribbon2.position.y = t2.position.y + midH/2 - 0.02; cake.add(ribbon2);
+
+    // Vermicelles (sprinkles)
     const sprinkles = new THREE.InstancedMesh(
       new THREE.CapsuleGeometry(0.01, 0.02, 4, 6),
       new THREE.MeshStandardMaterial({ color:0xfff1a8, roughness:0.6 }),
@@ -181,25 +180,47 @@
     }
     sprinkles.castShadow = true; cake.add(sprinkles);
 
-    const candle = new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.03,0.19,24), new THREE.MeshStandardMaterial({ color:0xff6b9b, roughness:0.5 }));
-    candle.position.set(0, t3.position.y + topH/2 + 0.11, 0); candle.castShadow=true; cake.add(candle);
+    // Bougie + flamme
+    const candle = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.03,0.03,0.19,24),
+      new THREE.MeshStandardMaterial({ color:0xff6b9b, roughness:0.5 })
+    ); candle.position.set(0, t3.position.y + topH/2 + 0.11, 0); candle.castShadow=true; cake.add(candle);
     const flame = new THREE.PointLight(0xffd27a, 1.2, 2.4); flame.position.copy(candle.position).add(new THREE.Vector3(0,0.12,0)); scene.add(flame);
 
-    // ---------- Cadres (biseauté + verre + image large) ----------
+    // ---------- Cadres améliorés (biseau + verre + image large) ----------
     const frames = new THREE.Group(); scene.add(frames);
     function makeFrame(w=0.55,h=0.38,ry=0){
       const g = new THREE.Group();
-      const border = new THREE.Mesh(new THREE.BoxGeometry(w+0.06, h+0.06, 0.04), new THREE.MeshPhysicalMaterial({ color:0x1f2430, roughness:0.9, metalness:0.0, clearcoat:0.2 }));
-      border.castShadow=true; border.position.z = 0.02; g.add(border);
-      const inner  = new THREE.Mesh(new THREE.BoxGeometry(w+0.02, h+0.02, 0.02), new THREE.MeshStandardMaterial({ color:0x353b48, roughness:0.7 }));
-      inner.position.z = 0.031; g.add(inner);
-      const plane  = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color:0x111318 })); plane.position.z = 0.033; g.add(plane);
-      const glass  = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshPhysicalMaterial({ color:0xffffff, transparent:true, opacity:0.06, roughness:0.1, metalness:0, reflectivity:0.6, clearcoat:1, clearcoatRoughness:0.2 })); glass.position.z = 0.034; g.add(glass);
+      // cadre biseauté
+      const border = new THREE.Mesh(
+        new THREE.BoxGeometry(w+0.06, h+0.06, 0.04),
+        new THREE.MeshPhysicalMaterial({ color:0x1f2430, roughness:0.9, metalness:0.0, clearcoat:0.2 })
+      ); border.castShadow=true; border.position.z = 0.02; g.add(border);
+
+      // chanfrein décor (intérieur)
+      const inner = new THREE.Mesh(
+        new THREE.BoxGeometry(w+0.02, h+0.02, 0.02),
+        new THREE.MeshStandardMaterial({ color:0x353b48, roughness:0.7 })
+      ); inner.position.z = 0.031; g.add(inner);
+
+      // image (plus grande)
+      const plane = new THREE.Mesh(
+        new THREE.PlaneGeometry(w, h),
+        new THREE.MeshBasicMaterial({ color:0x111318 })
+      ); plane.position.z = 0.033; g.add(plane);
+
+      // verre (subtil)
+      const glass = new THREE.Mesh(
+        new THREE.PlaneGeometry(w, h),
+        new THREE.MeshPhysicalMaterial({ color:0xffffff, transparent:true, opacity:0.06, roughness:0.1, metalness:0, reflectivity:0.6, clearcoat:1, clearcoatRoughness:0.2 })
+      ); glass.position.z = 0.034; g.add(glass);
+
       g.rotation.y = ry; g.userData.plane = plane; return g;
     }
     const f1 = makeFrame(0.56,0.40, 0.22);
     const f2 = makeFrame(0.50,0.50, 0.00);
     const f3 = makeFrame(0.56,0.36,-0.22);
+
     f1.position.set(-0.95, 0.50,  0.10);
     f2.position.set( 0.00, 0.50, -0.62);
     f3.position.set( 0.98, 0.50,  0.12);
@@ -221,6 +242,7 @@
       return new Promise(res=>{
         loaderTex.load(url, (tex)=>{
           tex.colorSpace=THREE.SRGBColorSpace; tex.minFilter=THREE.LinearFilter;
+          // couvrir le cadre (cover)
           const plane = frame.userData.plane;
           plane.material.map = tex; plane.material.needsUpdate = true;
           res();
@@ -232,20 +254,25 @@
     const introGroup = new THREE.Group(); scene.add(introGroup);
     const fontLoader = new FontLoader();
     fontLoader.load('https://cdn.jsdelivr.net/npm/three@0.161.0/examples/fonts/helvetiker_regular.typeface.json', (font)=>{
-      const geo = new TextGeometry(INTRO_TEXT, { font, size: 0.14, height: 0.03, curveSegments: 12, bevelEnabled: true, bevelThickness: 0.01, bevelSize: 0.005, bevelSegments: 3 });
+      const geo = new TextGeometry(INTRO_TEXT, {
+        font, size: 0.14, height: 0.03, curveSegments: 12, bevelEnabled: true, bevelThickness: 0.01, bevelSize: 0.005, bevelSegments: 3
+      });
       geo.computeBoundingBox();
       const mat = new THREE.MeshPhysicalMaterial({ color:0xffe3ec, metalness:0.2, roughness:0.5, clearcoat:0.6 });
       const mesh = new THREE.Mesh(geo, mat);
       geo.boundingBox.getCenter(mesh.position).multiplyScalar(-1);
       mesh.position.y = 1.35; mesh.position.z = 0.0;
       introGroup.add(mesh);
+      // Overlay HTML en fade-in/out pour renfort
       const ov = document.getElementById('introOverlay');
       ov.style.opacity = 1;
       setTimeout(()=> ov.style.opacity = 0, 1600);
+      // Confettis
       burstConfetti(new THREE.Vector3(0,1.2,0), 220);
       setTimeout(()=> { scene.remove(introGroup); }, 2600);
     });
 
+    // Confettis (particules physiques simples)
     const confGroup = new THREE.Group(); scene.add(confGroup);
     const confGeo = new THREE.PlaneGeometry(0.02, 0.012);
     const confMat = new THREE.MeshBasicMaterial({ color:0xffffff, side:THREE.DoubleSide });
@@ -256,29 +283,36 @@
         m.material.color.setHex(confColors[Math.floor(Math.random()*confColors.length)]);
         m.position.copy(origin);
         m.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI);
-        m.userData.v = new THREE.Vector3((Math.random()-0.5)*1.6, Math.random()*1.5 + 0.6, (Math.random()-0.5)*1.6);
+        m.userData.v = new THREE.Vector3(
+          (Math.random()-0.5)*1.6,
+          Math.random()*1.5 + 0.6,
+          (Math.random()-0.5)*1.6
+        );
         m.userData.life = 1.8 + Math.random()*0.6;
         confGroup.add(m);
       }
     }
 
-    // ---------- État & animation ----------
+    // ---------- État & anim ----------
     const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
     const easeInOutCubic = t => t<0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3)/2;
     let phase=0, t0=performance.now(), skipping=false;
 
     function reset(){
       phase=0; t0=performance.now(); skipping=false;
+      // positionne le gâteau au-dessus, sans interpenetration
       cake.position.set(0, tableSurfaceY + plateH + baseH + 0.8, 0);
       cake.rotation.set(0.12, 0.35, 0);
       frames.children.forEach(f=>{
         f.visible=false; f.position.y = 1.15; f.rotation.x = -0.22; f.scale.setScalar(0.95);
       });
+      // caméra (rail début)
       camera.position.set(-1.1, 1.1, 3.0);
       camera.lookAt(0, 0.6, 0);
     }
     reset();
 
+    // Caméra rail (bezier)
     function cameraRail(t){ // 0..1
       const p0 = new THREE.Vector3(-1.1, 1.1, 3.0);
       const p1 = new THREE.Vector3(-0.6, 1.05, 2.4);
@@ -293,6 +327,7 @@
       camera.position.copy(pos); camera.lookAt(0, 0.6, 0);
     }
 
+    // Charger photos dès le début
     (async ()=>{
       const urls = await loadPhotoURLs();
       await Promise.all([
@@ -302,10 +337,12 @@
       ]);
     })();
 
+    // UI
     document.getElementById('replay').addEventListener('click', ()=> reset());
     document.getElementById('skip').addEventListener('click', ()=>{
       skipping=true;
-      const yCake = plate.position.y;
+      // aller en fin
+      const yCake = plate.position.y; // plateau déjà posé
       cake.position.y = yCake;
       frames.children.forEach(f=>{ f.visible=true; f.position.y=0.5; f.rotation.x=0; f.scale.setScalar(1); });
       camera.position.set(0.65, 1.06, 2.25); camera.lookAt(0,0.6,0);
@@ -316,6 +353,7 @@
       requestAnimationFrame(animate);
       const dt = (now - t0)/1000;
 
+      // confettis update
       for (let i=confGroup.children.length-1;i>=0;i--){
         const m = confGroup.children[i];
         m.userData.v.y -= 3.2 * (1/60);
@@ -325,10 +363,11 @@
         if (m.userData.life <= 0) { confGroup.remove(m); }
       }
 
+      // Phase 0 : descente sans pénétrer la table
       if (phase===0 && !skipping){
         const drop = 1.35;
         const t = Math.min(dt/drop, 1);
-        const yEnd = plate.position.y;
+        const yEnd = plate.position.y; // la base du gâteau est le plateau déjà posé
         const yStart = yEnd + 0.8;
         cake.position.y = yStart + (yEnd - yStart)*easeOutCubic(t);
         cake.rotation.y += 0.01;
@@ -340,6 +379,7 @@
         }
       }
 
+      // Phase 1 : apparition cadres
       if (phase===1 && !skipping){
         const dur=1.0, tt=Math.min((now-t0)/1000/dur,1);
         frames.children.forEach((f,i)=>{
@@ -356,6 +396,7 @@
         if (tt>=1){ phase=2; t0=now; }
       }
 
+      // Phase 2 : vie douce
       if (phase>=2){
         const breathe = Math.sin(now/1000*1.2)*0.002;
         cake.position.y += breathe;
@@ -366,12 +407,15 @@
     }
     requestAnimationFrame(animate);
 
+    // Resize
     addEventListener('resize', ()=>{
       camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
       renderer.setSize(innerWidth, innerHeight);
     }, {passive:true});
 
+    // Allègement petit écran
     if (Math.min(innerWidth, innerHeight) < 380) { renderer.shadowMap.enabled=false; key.castShadow=false; }
   </script>
 </body>
 </html>
+
